@@ -17,6 +17,7 @@ ofstream outputFile;			// output file stream
 //	method:openInputFile  
 //      
 //	description: open input file
+//	return: T=success F=failure
 //
 bool Analysis::openInputFile(const char* input) {
   inputFile.open(input);
@@ -28,6 +29,7 @@ bool Analysis::openInputFile(const char* input) {
 //	method:openOutputFile  
 //      
 //	description: open output file
+//	return: T=success F=failure
 //
 bool Analysis::openOutputFile(const char* output) {
   outputFile.open(output);
@@ -39,6 +41,7 @@ bool Analysis::openOutputFile(const char* output) {
 //	method:closeFiles  
 //      
 //	description: close files
+//	return: none
 //
 void Analysis::closeFiles() {
   inputFile.close();
@@ -50,10 +53,24 @@ void Analysis::closeFiles() {
 //	method:write   
 //      
 //	description: write data item
+//	return: none
 //
 void Analysis::write(const long data) {
    outputFile << data << "\n";
 }
+
+//
+//	class: Analysis  
+//	method:overflow(x, y)   
+//      
+//	description: test for overflow of x+y
+//	return: T=overflow F=no overflow
+//
+bool Analysis::overflow(const long x, const long y) {
+  return (((x > 0) && (y > LLONG_MAX - x)) ||
+          ((x < 0) && (y < LLONG_MIN - x)));
+}
+
 
 //
 //	class: Analysis  
@@ -62,11 +79,12 @@ void Analysis::write(const long data) {
 //	description: read input file containing whole numbers
 //	compute sum and average of numbers read  
 //	write statistics to output file
+//	return: 0=success negative=failure
 //
 
 int Analysis::analyse(const char* input, const char* output) {
 
-enum RESCODE resultCode = SUCCESS; 	// default result code 
+int resultCode; 	// result code : 0 for success -ve for error
 
 // open input file
 resultCode = openInputFile(input) ? SUCCESS: INPUTERROR;
@@ -77,6 +95,8 @@ if (resultCode == SUCCESS) {
 }
 
 // read input file
+// check for bad data or overflow
+// compute sum and linecount
 
 int count=0;				// initialise linecount
 long num, sum=0;			// initialise number and sum 
@@ -86,36 +106,41 @@ while (getline(inputFile, datastring) && (resultCode == SUCCESS)) {
   int scanres = (sscanf(datastring.c_str(), "%ld", &num));
 
   // check for scan failure
-   if (scanres < 1) 
+  // disallow blank or corrupt lines 
+   if (scanres != 1) 
     resultCode = INVALIDINPUT;
-
+  else
   // check for overflow
-  if (overflow(num, sum)) 
-    resultCode = RANGEERROR;  
+    if (overflow(num, sum)) 
+      resultCode = RANGEERROR;  
 
-  // accumulate totals	
+  // accumulate total values and linecount	
   sum += num;
   count++;
 }
 
+// compute average
+// output linecount sum and ave 
+// 
+
 if (resultCode == SUCCESS) {
-   // compute average
-   float avg = float(sum)/count;
- 
-   // output count sum and average
-   write(count);
-   write(sum);
-   write(avg);
 
    // check for empty file
    if (count == 0)
      resultCode = EMPTYFILE;
+   else {
+   // output count sum and average
+   write(count);
+   write(sum);
+   write(float(sum)/count);
+   }
 }
 
 // close files
 closeFiles();
 
 return resultCode;
+
 }
 
 

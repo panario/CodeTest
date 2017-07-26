@@ -25,17 +25,14 @@ public:
 static int analyse(const char* input, const char* output);
 
 private:
-// open  files
+// file operations
 static bool openInputFile(const char* input); 
 static bool openOutputFile(const char* output); 
 static void closeFiles();
 static void write(const long data);
 
-// check for integer overflow
-static bool overflow(const long x, const long y) {
-  return (((x > 0) && (y > INT_MAX - x)) ||
-          ((x < 0) && (y < INT_MIN - x)));
-};
+// integer overflow
+static bool overflow(const long x, const long y);
 
 };
 
