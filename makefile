@@ -10,6 +10,6 @@ libanalysis: analysis.o
 .PHONY: clean 
 
 clean:
-	rm libanalysis
+	rm libanalysis analysis.o
 
 
